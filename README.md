@@ -32,11 +32,14 @@ src/
 │   └── submissionRepository.js # Camada de acesso ao banco (SQL)
 ├── services/
 │   ├── geminiService.js     # Avaliação estática de código e soft skills via Gemini AI
+│   ├── chatService.js       # System prompts das personas (PM / Dev Jr) e chamada ao Gemini
 │   └── submissionService.js # Regras de negócio e orquestração
 ├── controllers/
-│   └── submissionController.js # Handlers HTTP (Express)
+│   ├── submissionController.js # Handlers HTTP (Express) — /api/submissions
+│   └── chatController.js       # Handlers HTTP (Express) — /api/chat
 ├── routes/
-│   └── submissionRoutes.js  # Rotas REST (/api/submissions)
+│   ├── submissionRoutes.js  # Rotas REST (/api/submissions)
+│   └── chatRoutes.js        # Rotas REST (/api/chat)
 ├── middlewares/
 │   ├── requestLogger.js     # Logger visual de requisições no terminal
 │   └── errorHandler.js      # Tratamento global de exceções
@@ -98,7 +101,41 @@ npm run dev
 }
 ```
 
-### 2. Avaliar e Registrar Submissão (IA + Postgres)
+### 2. Conversar com uma Persona (PM ou Dev Jr)
+`POST /api/chat`
+
+Usado pelo frontend a cada mensagem enviada numa das duas conversas simultâneas
+(caixa de entrada com PM e Dev Jr). Injeta o system prompt da persona e o
+código atual do editor, e consulta o Gemini.
+
+**Payload:**
+```json
+{
+  "persona": "pm",
+  "history": [
+    { "sender": "candidate", "content": "Qual o prazo que eu tenho?", "timestamp": "14:30" }
+  ],
+  "currentCode": "void processPayment(double amount, double* accountBalance) { ... }"
+}
+```
+
+`persona` aceita `"pm"` ou `"dev_jr"`.
+
+**Resposta (sucesso):**
+```json
+{ "reply": "Não entendo essas coisas técnicas...", "persona": "pm" }
+```
+
+**Resposta (sem chave, cota estourada, erro do modelo ou resposta vazia):**
+```json
+{ "reply": null, "persona": "pm", "fallback": true, "reason": "GEMINI_API_KEY não configurada" }
+```
+
+`reply: null` é proposital: cabe ao frontend escolher a fala de contingência no
+tom da persona, em vez do backend devolver um texto de erro técnico como se
+fosse fala real (ver `unavailable()` em `chatService.js`).
+
+### 3. Avaliar e Registrar Submissão (IA + Postgres)
 `POST /api/submissions`
 
 **Payload:**
@@ -113,10 +150,14 @@ npm run dev
 }
 ```
 
-### 3. Listar Todas as Submissões (Recrutador)
+Se a avaliação do Gemini falhar, o scorecard salvo vem marcado com
+`evaluationFailed: true` e `evaluationError` — nunca uma nota real disfarçada
+de mock (ver `failedEvaluation()` em `geminiService.js`).
+
+### 4. Listar Todas as Submissões (Recrutador)
 `GET /api/submissions`
 
-### 4. Consultar Relatório por ID do Candidato
+### 5. Consultar Relatório por ID do Candidato
 `GET /api/submissions/:candidateId`
 
 ---
