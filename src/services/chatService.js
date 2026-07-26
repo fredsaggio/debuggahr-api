@@ -64,24 +64,25 @@ class ChatService {
           parts: [{ text: msg.content }]
         }));
 
-      let result;
-      if (geminiContents.length > 0) {
-        result = await model.generateContent({
-          contents: geminiContents,
-          generationConfig: {
-            temperature: 0.4,
-            maxOutputTokens: 65,
-          }
-        });
-      } else {
-        result = await model.generateContent({
-          contents: [{ role: 'user', parts: [{ text: 'Olá' }] }],
-          generationConfig: {
-            temperature: 0.4,
-            maxOutputTokens: 65,
-          }
-        });
-      }
+      // A API exige ao menos uma fala de 'user'. O Timer injeta a abertura do
+      // dev_jr antes de o candidato escrever qualquer coisa, entao o historico
+      // pode conter so falas de persona — e ai a requisicao seria rejeitada.
+      const hasCandidateMessage = geminiContents.some(entry => entry.role === 'user');
+      const contents = hasCandidateMessage
+        ? geminiContents
+        : [{ role: 'user', parts: [{ text: 'Olá' }] }];
+
+      const result = await model.generateContent({
+        contents,
+        generationConfig: {
+          temperature: 0.4,
+          // O Gemini 3 gasta tokens de "thinking" dentro deste mesmo orcamento
+          // (~400 por chamada). Com 65, o thinking consumia tudo e a resposta
+          // saia truncada ou vazia. A concisao e garantida pelo system prompt,
+          // nao por este limite.
+          maxOutputTokens: 1000,
+        }
+      });
 
       const responseText = result.response.text();
 

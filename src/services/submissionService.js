@@ -38,6 +38,14 @@ class SubmissionService {
       fullReport,
     });
 
+    if (scorecard.evaluationFailed) {
+      console.warn('==================================================');
+      console.warn(`🚨 [Service] ATENÇÃO: a avaliação do Gemini NÃO ocorreu para ${candidateId}.`);
+      console.warn(`🚨 Motivo: ${scorecard.evaluationError}`);
+      console.warn(`🚨 As notas abaixo são fixas do mock e NÃO representam o candidato.`);
+      console.warn('==================================================');
+    }
+
     console.log('==================================================');
     console.log(`✅ [Service] SUBMISSÃO AVALIADA E REGISTRADA NO POSTGRESQL!`);
     console.log(`👤 Candidato ID : ${candidateId}`);
