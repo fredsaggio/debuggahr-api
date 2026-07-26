@@ -3,6 +3,7 @@ const cors = require('cors');
 const requestLogger = require('./middlewares/requestLogger');
 const errorHandler = require('./middlewares/errorHandler');
 const submissionRoutes = require('./routes/submissionRoutes');
+const chatRoutes = require('./routes/chatRoutes');
 
 const app = express();
 
@@ -17,6 +18,7 @@ app.get('/health', (req, res) => {
 
 // API Routes
 app.use('/api/submissions', submissionRoutes);
+app.use('/api/chat', chatRoutes);
 
 // Error Handling Middleware
 app.use(errorHandler);
