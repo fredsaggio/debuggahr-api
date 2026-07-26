@@ -83,6 +83,21 @@ const mockScorecard = {
   },
 };
 
+/**
+ * Scorecard de contingência quando a avaliação real não acontece.
+ *
+ * As notas são fixas e NÃO refletem o candidato, por isso vão marcadas: sem a
+ * flag, um relatório mock chega ao recrutador indistinguível de uma avaliação
+ * verdadeira. Os campos extras seguem para o full_report (JSONB).
+ */
+function failedEvaluation(reason) {
+  return {
+    ...mockScorecard,
+    evaluationFailed: true,
+    evaluationError: reason,
+  };
+}
+
 class GeminiService {
   async evaluateSubmission(payload) {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -90,7 +105,7 @@ class GeminiService {
 
     if (!apiKey) {
       console.warn('⚠️ [Gemini Service] GEMINI_API_KEY não encontrada. Utilizando resposta mock de segurança.');
-      return mockScorecard;
+      return failedEvaluation('GEMINI_API_KEY não configurada');
     }
 
     try {
@@ -113,8 +128,8 @@ class GeminiService {
       return validatedScorecard;
     } catch (error) {
       console.error('❌ [Gemini Service Error] Falha na avaliação do Gemini:', error.message);
-      console.warn('⚠️ Utilizando scorecard fallback de segurança.');
-      return mockScorecard;
+      console.warn('⚠️ Utilizando scorecard fallback de segurança (MARCADO COMO NÃO-AVALIADO).');
+      return failedEvaluation(error.message);
     }
   }
 }

@@ -14,6 +14,7 @@ async function bootstrap() {
     console.log(` 📥 POST /api/submissions`);
     console.log(` 📤 GET  /api/submissions`);
     console.log(` 🔍 GET  /api/submissions/:candidateId`);
+    console.log(` 🎭 POST /api/chat`);
     console.log(`==================================================`);
   });
 }
