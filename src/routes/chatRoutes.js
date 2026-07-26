@@ -1,8 +1,7 @@
-const { Router } = require('express');
+const express = require('express');
+const router = express.Router();
 const chatController = require('../controllers/chatController');
 
-const router = Router();
-
-router.post('/', (req, res, next) => chatController.createReply(req, res, next));
+router.post('/', chatController.handleChatSimulation);
 
 module.exports = router;

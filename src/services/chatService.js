@@ -1,0 +1,99 @@
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+const SYSTEM_PROMPTS = {
+    pm: `Você é um Product Manager focado em resultados, pragmático e levemente ansioso em uma equipe de pagamentos.
+O candidato (com quem você está falando) é o novo TECH LEAD da equipe.
+O contexto: O Tech Lead está resolvendo um ticket crítico de 'duplicidade de cobrança'.
+
+Sua tarefa: Interromper para anunciar uma mudança de escopo (ex: "O cliente quer análise manual agora") ou cobrar prazo/impacto nos negócios.
+
+Regras Estritas:
+1. NUNCA quebre o personagem (não cite que é IA, teste ou simulação).
+2. ZERO FEEDBACK: Nunca elogie ou critique o desempenho/código.
+3. ANTI-COLA: Você não entende de código.
+4. CONCISÃO EXTREMA: Máximo de 2 frases curtas.`,
+
+    dev_jr: `Você é um Desenvolvedor Júnior na equipe de pagamentos. É curioso, mas tem pouca experiência e se assusta com lógicas complexas.
+O candidato (com quem você está falando) é o seu novo TECH LEAD.
+O contexto: O Tech Lead está codando a solução para o bug de 'duplicidade de cobrança'.
+
+Sua tarefa: Questionar a abordagem técnica, focando na complexidade, legibilidade ou manutenção do código no futuro.
+
+Regras Estritas:
+1. NUNCA quebre o personagem (não cite que é IA, teste ou simulação).
+2. ZERO FEEDBACK: Nunca elogie a paciência ou a qualidade do código.
+3. ANTI-COLA: Você é o Júnior e NÃO SABE a solução.
+4. CONCISÃO EXTREMA: Máximo de 2 frases curtas.`
+};
+
+class ChatService {
+  async handleChat(persona, history, currentCode) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    const modelName = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
+
+    if (!apiKey) {
+      console.warn('⚠️ [Chat Service] GEMINI_API_KEY não encontrada. Utilizando resposta mock.');
+      return { reply: "Estou aguardando as atualizações. (Mock)", persona };
+    }
+
+    try {
+      const basePrompt = SYSTEM_PROMPTS[persona];
+      if (!basePrompt) {
+        throw new Error("Persona inválida solicitada.");
+      }
+
+      const systemInstruction = `
+          ${basePrompt}
+          
+          [ESTADO ATUAL DO EDITOR]:
+          \`\`\`
+          ${currentCode && currentCode.trim() !== '' ? currentCode : "Nenhum código estruturado digitado ainda."}
+          \`\`\`
+      `;
+
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ 
+        model: modelName,
+        systemInstruction: systemInstruction 
+      });
+
+      const geminiContents = history
+        .filter(msg => msg.sender !== 'system')
+        .map(msg => ({
+          role: msg.sender === 'candidate' ? 'user' : 'model',
+          parts: [{ text: msg.content }]
+        }));
+
+      let result;
+      if (geminiContents.length > 0) {
+        result = await model.generateContent({
+          contents: geminiContents,
+          generationConfig: {
+            temperature: 0.4,
+            maxOutputTokens: 65,
+          }
+        });
+      } else {
+        result = await model.generateContent({
+          contents: [{ role: 'user', parts: [{ text: 'Olá' }] }],
+          generationConfig: {
+            temperature: 0.4,
+            maxOutputTokens: 65,
+          }
+        });
+      }
+
+      const responseText = result.response.text();
+
+      return {
+        reply: responseText || "Estou aguardando as atualizações.",
+        persona: persona
+      };
+    } catch (error) {
+      console.error('❌ [Chat Service Error] Falha na simulação de chat do Gemini:', error.message);
+      return { reply: "Falha na comunicação com o motor do simulador.", persona };
+    }
+  }
+}
+
+module.exports = new ChatService();

@@ -1,25 +1,17 @@
-const personaService = require('../services/personaService');
+const chatService = require('../services/chatService');
 
-class ChatController {
-  async createReply(req, res, next) {
-    try {
-      const { persona, history, currentCode } = req.body;
+exports.handleChatSimulation = async (req, res, next) => {
+  try {
+    const { persona, history, currentCode } = req.body;
 
-      if (!personaService.isValidPersona(persona)) {
-        return res.status(400).json({ error: 'Persona inválida solicitada.' });
-      }
-
-      const reply = await personaService.generateReply({
-        persona,
-        history: Array.isArray(history) ? history : [],
-        currentCode: currentCode || '',
-      });
-
-      return res.status(200).json({ reply, persona });
-    } catch (error) {
-      next(error);
+    if (!persona) {
+      return res.status(400).json({ error: "Persona inválida solicitada." });
     }
-  }
-}
 
-module.exports = new ChatController();
+    const chatResponse = await chatService.handleChat(persona, history || [], currentCode || '');
+    
+    return res.status(200).json(chatResponse);
+  } catch (error) {
+    next(error);
+  }
+};
