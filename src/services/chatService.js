@@ -26,14 +26,27 @@ Regras Estritas:
 4. CONCISÃO EXTREMA: Máximo de 2 frases curtas.`
 };
 
+/**
+ * Resposta usada quando não foi possível obter uma fala real da persona.
+ *
+ * Devolve `reply: null` de propósito: inventar aqui um texto tipo "Falha na
+ * comunicação com o simulador" faz o candidato ler uma mensagem de erro técnica
+ * dentro do chat, como se a persona tivesse dito aquilo. Quem sabe o nome e o
+ * tom de cada contato é o frontend, então cabe a ele escolher a fala de
+ * contingência — este flag é só o aviso de que precisa fazê-lo.
+ */
+function unavailable(persona, reason) {
+  return { reply: null, persona, fallback: true, reason };
+}
+
 class ChatService {
   async handleChat(persona, history, currentCode) {
     const apiKey = process.env.GEMINI_API_KEY;
     const modelName = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
 
     if (!apiKey) {
-      console.warn('⚠️ [Chat Service] GEMINI_API_KEY não encontrada. Utilizando resposta mock.');
-      return { reply: "Estou aguardando as atualizações. (Mock)", persona };
+      console.warn('⚠️ [Chat Service] GEMINI_API_KEY não encontrada.');
+      return unavailable(persona, 'GEMINI_API_KEY não configurada');
     }
 
     try {
@@ -84,15 +97,15 @@ class ChatService {
         }
       });
 
-      const responseText = result.response.text();
+      const responseText = result.response.text().trim();
+      if (!responseText) {
+        return unavailable(persona, 'Gemini devolveu resposta vazia');
+      }
 
-      return {
-        reply: responseText || "Estou aguardando as atualizações.",
-        persona: persona
-      };
+      return { reply: responseText, persona };
     } catch (error) {
       console.error('❌ [Chat Service Error] Falha na simulação de chat do Gemini:', error.message);
-      return { reply: "Falha na comunicação com o motor do simulador.", persona };
+      return unavailable(persona, error.message);
     }
   }
 }
