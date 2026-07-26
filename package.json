@@ -1,0 +1,19 @@
+{
+  "name": "hackaton-api",
+  "version": "1.0.0",
+  "description": "Backend API para armazenamento e consulta de avaliações do Hackaton via PostgreSQL",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "migrate": "node migrate.js"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "pg": "^8.13.1",
+    "zod": "^4.4.3"
+  }
+}
