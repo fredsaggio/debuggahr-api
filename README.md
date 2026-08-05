@@ -1,4 +1,4 @@
-# Hackaton API 🚀
+# DebuggaHR API 🚀
 
 Backend independente desenvolvido em **Node.js, Express e PostgreSQL** para armazenamento, avaliação via **Gemini AI** e consulta de relatórios técnicos de candidatos em simulações de hackathon.
 
@@ -54,7 +54,7 @@ src/
 
 ```bash
 git clone <URL_DO_SEU_REPOSISORIO>
-cd hackaton-api
+cd debuggahr-api
 npm install
 ```
 
@@ -69,7 +69,7 @@ cp .env.example .env
 Conteúdo do `.env`:
 ```env
 PORT=3001
-DATABASE_URL=postgres://postgres:postgrespassword@localhost:5433/hackaton_db
+DATABASE_URL=postgres://postgres:postgrespassword@localhost:5433/debuggahr_db
 GEMINI_API_KEY=sua_chave_gemini_aqui
 GEMINI_MODEL=gemini-3.6-flash
 ```
@@ -97,7 +97,7 @@ npm run dev
 ```json
 {
   "status": "ok",
-  "service": "hackaton-api"
+  "service": "debuggahr-api"
 }
 ```
 
